@@ -1,6 +1,7 @@
 
 ---
 - name: CPT Franchise Switch specific config
+  hosts: all
   gather_facts: false
   connection: local
 
