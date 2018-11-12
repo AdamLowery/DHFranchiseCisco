@@ -1,7 +1,6 @@
 
 ---
 - name: CPT Franchise Switch specific config
-  hosts: DFC-D-WINELANDS-SW
   gather_facts: false
   connection: local
 
