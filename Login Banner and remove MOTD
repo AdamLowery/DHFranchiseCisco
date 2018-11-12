@@ -1,0 +1,87 @@
+
+---
+- name: CPT Franchise Switch specific config
+  hosts: DFC-D-WINELANDS-SW
+  gather_facts: false
+  connection: local
+
+  vars:
+    cli:
+      username: adam
+      password: cisco
+
+  tasks:
+    - name: Creating Global Config
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+           - hostname DFC-D-WINELANDS-SW
+           - clock timezone ZA 2
+#          - system mtu routing 1500
+           - vtp domain WINELANDS
+           - vtp mode transparent
+           - ip subnet-zero
+           - ip routing
+           - no ip domain-lookup
+           - ip domain-name discovery.holdings.co.za
+#           - mls qos map policed-dscp  0 24 46 to 8
+#           - mls qos
+           - errdisable recovery cause udld
+           - errdisable recovery cause bpduguard
+           - errdisable recovery cause security-violation
+           - errdisable recovery cause channel-misconfig
+           - errdisable recovery cause pagp-flap
+           - errdisable recovery cause dtp-flap
+           - errdisable recovery cause link-flap
+           - errdisable recovery cause sfp-config-mismatch
+           - errdisable recovery cause gbic-invalid
+           - errdisable recovery cause l2ptguard
+           - errdisable recovery cause psecure-violation
+           - errdisable recovery cause dhcp-rate-limit
+           - errdisable recovery cause unicast-flood
+           - errdisable recovery cause vmps
+           - errdisable recovery cause storm-control
+           - errdisable recovery cause inline-power
+           - errdisable recovery cause arp-inspection
+           - errdisable recovery cause loopback
+           - no file verify auto
+           - spanning-tree mode rapid-pvst
+           - spanning-tree extend system-id
+           - vlan internal allocation policy ascending
+      register: print_output
+    - debug: var=print_output
+
+
+    - name: configure the login banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: login
+        text: |
+          
+          .--------------------------------------------------------------------------------------------------.
+          | By logging on to this device, you acknowledge that you are about to access a private computer    |
+          | network and are aware that both personal and business information processed through this system  |
+          | or network, and any devices attached thereto, are subject to inte-rception, review and action by |
+          | authorised company personnel and systems, in order to ensure compliance to the appropriate local |
+          | and international laws and regulations and company policies that may apply.                      |
+          |                                                                                                  |
+          |    *****  UNAUTHORISED ACCESS OR UNAUTHORISED USE OF THIS DEVICE IS STRICTLY PROHIBITED. *****   |
+          '--------------------------------------------------------------------------------------------------'
+      
+        state: present
+
+
+    - name: remove the motd banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: motd
+        state: absent
+
+
+      register: print_output
+    - debug: var=print_output
