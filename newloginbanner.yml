@@ -1,0 +1,56 @@
+
+---
+- name: CPT Franchise Switch specific config
+  hosts: all
+  gather_facts: false
+  connection: local
+
+#  vars:
+#    cli:
+#      username: adam
+#      password: cisco
+
+  tasks:
+    - name: Changing Name of switch to 1DP-TESTSTAGE-BASEMENT2
+      ios_config:
+#        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+           - hostname 1DP-TESTSTAGE-BASEMENT2
+
+    - name: configure the login banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: login
+        text: |
+          
+          .--------------------------------------------------------------------------------------------------.
+          | By logging on to this device, you acknowledge that you are about to access a private computer    |
+          | network and are aware that both personal and business information processed through this system  |
+          | or network, and any devices attached thereto, are subject to inte-rception, review and action by |
+          | authorised company personnel and systems, in order to ensure compliance to the appropriate local |
+          | and international laws and regulations and company policies that may apply.                      |
+          |                                                                                                  |
+          |    *****  UNAUTHORISED ACCESS OR UNAUTHORISED USE OF THIS DEVICE IS STRICTLY PROHIBITED. *****   |
+          '--------------------------------------------------------------------------------------------------'
+
+
+
+      
+        state: present
+
+
+    - name: remove the motd banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: motd
+        state: absent
+
+      register: print_output
+    - debug: var=print_output
+        
+#
