@@ -1,0 +1,331 @@
+
+---
+#- name: Manage CPT Franchise Routers
+#  hosts: cpt-franchise-routers
+#  gather_facts: false
+#  connection: local
+#
+#  vars:
+#    cli:
+#      username: adam
+#      password: cisco
+#
+#  tasks:
+#    - name: enable ospf
+#      ios_config:
+#        provider: "{{ cli }}"
+#        authorize: yes
+#        parents: router ospf 1
+#        lines:
+#          - network 0.0.0.0 255.255.255.255 area 0
+#
+#      register: print_output
+#
+#    -  debug: var=print_output
+#
+- name: CPT Franchise Switch specific config
+  hosts: DFC-D-WINELANDS-SW
+  gather_facts: false
+  connection: local
+
+  vars:
+    cli:
+      username: adam
+      password: cisco
+
+  tasks:
+    - name: Creating Global Config
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+           - hostname DFC-D-WINELANDS-SW
+           - clock timezone ZA 2
+#          - system mtu routing 1500
+           - vtp domain WINELANDS
+           - vtp mode transparent
+           - ip subnet-zero
+           - ip routing
+           - no ip domain-lookup
+           - ip domain-name discovery.holdings.co.za
+#           - mls qos map policed-dscp  0 24 46 to 8
+#           - mls qos
+           - errdisable recovery cause udld
+           - errdisable recovery cause bpduguard
+           - errdisable recovery cause security-violation
+           - errdisable recovery cause channel-misconfig
+           - errdisable recovery cause pagp-flap
+           - errdisable recovery cause dtp-flap
+           - errdisable recovery cause link-flap
+           - errdisable recovery cause sfp-config-mismatch
+           - errdisable recovery cause gbic-invalid
+           - errdisable recovery cause l2ptguard
+           - errdisable recovery cause psecure-violation
+           - errdisable recovery cause dhcp-rate-limit
+           - errdisable recovery cause unicast-flood
+           - errdisable recovery cause vmps
+           - errdisable recovery cause storm-control
+           - errdisable recovery cause inline-power
+           - errdisable recovery cause arp-inspection
+           - errdisable recovery cause loopback
+           - no file verify auto
+           - spanning-tree mode rapid-pvst
+           - spanning-tree extend system-id
+           - vlan internal allocation policy ascending
+      register: print_output
+    - debug: var=print_output
+        
+#    - name: Creating AAA Authentication Config
+#      ios_config:
+#        provider: "{{ cli }}"
+#        authorize: yes
+#        lines:
+#          - aaa new-model
+#          - aaa group server tacacs+ ISE_TACACS_GROUP
+#          - server 172.30.180.30
+#          - server 172.30.180.32
+#          - aaa authentication login default group tacacs+ line
+#          - aaa authentication login con group tacacs+ none
+#          - aaa authentication login no_tacacs enable
+#          - aaa authentication login AAA group ISE_TACACS_GROUP local line
+#          - aaa authentication enable default line
+#          - aaa authorization config-commands
+#          - aaa authorization exec default group tacacs+ none
+#          - aaa authorization exec con none
+#          - aaa authorization exec AAA group ISE_TACACS_GROUP local
+#          - aaa authorization commands 0 AAA group ISE_TACACS_GROUP local
+#          - aaa authorization commands 1 AAA group ISE_TACACS_GROUP local
+#          - aaa authorization commands 15 AAA group ISE_TACACS_GROUP local
+#          - aaa accounting send stop-record authentication failure
+#          - aaa accounting exec default start-stop group tacacs+
+#          - aaa accounting exec AAA start-stop group tacacs+ group ISE_TACACS_GROUP
+#          - aaa accounting commands 1 default start-stop group tacacs+
+#          - aaa accounting commands 15 default start-stop group tacacs+
+#          - aaa accounting connection default start-stop group tacacs+
+#          - aaa accounting system default start-stop group tacacs+ group ISE_TACACS_GROUP
+#          - aaa session-id common
+
+    - name: QOS class mapping
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: class-map match-any Scavenger
+        lines:
+           - match access-group name SCAVENGER
+      register: print_output
+    - debug: var=print_output
+
+#    - name: Interface settings
+#      ios_config:
+#        provider: "{{ cli }}"
+#        authorize: yes
+#        parents: "interface {{ item.interface }}"
+#        lines:
+#          - switchport mode access
+#          - speed 100 
+#          - duplex full
+#          - spanning-tree portfast
+#        parents: priority-queue out
+#        lines: 
+#          - no snmp trap link-status
+#        after:
+#          - no shutdown
+#      with_items:
+#        - { interface : GigabitEthernet0/0 }
+#        - { interface : GigabitEthernet0/1 }
+#        - { interface : GigabitEthernet0/2 }
+#        - { interface : GigabitEthernet0/3 }
+
+
+
+
+
+    - name: VLAN Interface settings
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: "interface {{ item.interface }}"
+        lines:
+          - ip address 10.0.0.10 255.0.0.0 #ADDRESS IS FOR LAB PURPOSES
+          - no ip redirects  
+      with_items:
+        - { interface : Vlan1 }    
+      register: print_output
+    - debug: var=print_output
+
+    - name: Network Settings
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+          - ip default-gateway 10.0.0.1 #ADDRESS IS FOR LAB PURPOSES
+          - ip classless
+          - ip route 0.0.0.0 0.0.0.0 10.0.0.1 #ADDRESS IS FOR LAB PURPOSES
+          - no ip http server
+          - ip tacacs source-interface Vlan1
+      register: print_output
+    - debug: var=print_output
+
+    - name: Access List Config
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: ip access-list extended ADMIN
+        lines:
+          - permit tcp 172.24.0.0 0.0.255.255 any eq telnet
+          - permit tcp 172.25.0.0 0.0.255.255 any eq telnet
+          - permit tcp 172.25.0.0 0.0.255.255 any eq 22
+          - permit tcp 172.24.0.0 0.0.255.255 any eq 22
+          - permit tcp any any eq 22 #ADDED FOR LAB PURPOSES
+      register: print_output
+    - debug: var=print_output
+
+    - name: SNMP and Security Global Settings
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+          - logging trap debugging
+          - logging 172.24.166.4
+          - logging 172.24.166.6
+          - logging 172.30.180.81
+          - logging 172.30.180.80
+          - access-list 50 permit 172.24.167.20
+          - access-list 50 permit 172.24.166.4
+          - access-list 50 permit 172.30.180.40
+          - access-list 50 permit 172.30.180.80
+          - access-list 50 permit 172.24.111.184
+          - access-list 50 permit 172.24.110.10
+#          - snmp-server engineID local 800000090300000F8FA7D401 # DOES NOT WORK ON GNS3 IMAGE
+          - snmp-server community V1tal1ty-ro RO 50
+          - snmp-server community V1tal1ty-rw RW 50
+          - snmp-server location DFC-D-WINELANDS-SW
+          - snmp-server contact TI Networks
+          - snmp-server enable traps snmp authentication coldstart warmstart
+#          - snmp-server enable traps entity # DOES NOT WORK ON GNS3 IMAGE
+#          - snmp-server enable traps config # DOES NOT WORK ON GNS3 IMAGE
+          - snmp-server enable traps stpx root-inconsistency loop-inconsistency
+          - snmp-server enable traps syslog
+          - snmp-server host 172.24.166.4 V1tal1ty-ro
+          - snmp-server host 172.24.167.20 V1tal1ty-ro
+          - snmp-server host 172.30.180.80 V1tal1ty-ro
+          - snmp-server host 172.30.180.81 V1tal1ty-ro
+#          - tacacs-server host 172.30.180.30 key 7 08051D5D0A2D5439411F5D0A2C39047B6560163224 # DOES NOT WORK ON GNS3 IMAGE
+#          - tacacs-server host 172.30.180.32 key 7 03200A18053B70621D1D480B11002B5F527F1F050B # DOES NOT WORK ON GNS3 IMAGE
+          - tacacs-server timeout 3
+          - no tacacs-server directed-request
+      register: print_output
+    - debug: var=print_output
+    
+    
+
+    - name: configure the login banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: login
+        text: |
+          
+          .--------------------------------------------------------------------------------------------------.
+          | By logging on to this device, you acknowledge that you are about to access a private computer    |
+          | network and are aware that both personal and business information processed through this system  |
+          | or network, and any devices attached thereto, are subject to inte-rception, review and action by |
+          | authorised company personnel and systems, in order to ensure compliance to the appropriate local |
+          | and international laws and regulations and company policies that may apply.                      |
+          |                                                                                                  |
+          |    *****  UNAUTHORISED ACCESS OR UNAUTHORISED USE OF THIS DEVICE IS STRICTLY PROHIBITED. *****   |
+          '--------------------------------------------------------------------------------------------------'
+      
+        state: present
+
+
+    - name: remove the motd banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: motd
+        state: absent
+
+    - name: remove the motd banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: motd
+        state: absent
+
+    - name: remove the exec banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: exec
+        state: absent
+
+    - name: remove the incoming banner
+      net_banner:
+        username: adam # Creates a deprectiation error
+        password: cisco # Creates a deprectiation error
+        authorize: yes
+        banner: incoming
+        state: absent
+
+    - name: Setting VTY Config 0 4
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: line vty 0 4
+        lines:
+          - exec-timeout 9 0
+#          - password 7 123D5404112B0A167B2804 # Ommited for Lab Purposes
+#          - authorization commands 0 AAA # Ommited for Lab Purposes
+#          - authorization commands 1 AAA # Ommited for Lab Purposes
+#          - authorization commands 15 AAA # Ommited for Lab Purposes
+#          - authorization exec AAA # Ommited for Lab Purposes
+          - logging synchronous
+#          - login authentication AAA # Ommited for Lab Purposes
+#          - transport input telnet # Ommited for Lab Purposes
+#          - transport output telnet # Ommited for Lab Purposes
+      register: print_output
+    - debug: var=print_output
+
+    - name: Setting VTY Config 5 15
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: line vty 5 15
+        lines:
+          - exec-timeout 9 0
+          - password 7 03200A18052F275E1F0A39
+#          - authorization commands 0 AAA # Ommited for Lab Purposes
+#          - authorization commands 1 AAA # Ommited for Lab Purposes
+#          - authorization commands 15 AAA # Ommited for Lab Purposes
+#          - authorization exec AAA # Ommited for Lab Purposes
+#          - logging synchronous # Ommited for Lab Purposes
+#          - login authentication AAA # Ommited for Lab Purposes
+          - transport input telnet
+          - transport output telnet
+      register: print_output
+    - debug: var=print_output
+
+    - name: Setting Line Con 0 
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: line con 0
+        lines:
+      register: print_output
+    - debug: var=print_output
+
+    - name: Setting NTP Config
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        lines:
+          - ntp clock-period 36029225
+          - ntp server 172.24.157.158
+          - ntp server 172.22.132.106 prefer
+      register: print_output
+    - debug: var=print_output
