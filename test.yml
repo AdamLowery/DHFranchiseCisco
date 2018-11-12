@@ -216,6 +216,8 @@
           - no tacacs-server directed-request
       register: print_output
     - debug: var=print_output
+    
+    
 
     - name: configure the login banner
       net_banner:
