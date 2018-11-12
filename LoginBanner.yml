@@ -1,3 +1,14 @@
+    
+---
+- name: Staging Environment Testing
+  gather_facts: false
+  connection: local
+
+  vars:
+    cli:
+      username: adam
+      password: cisco
+    
     - name: configure the login banner
       net_banner:
         username: adam # Creates a deprectiation error
